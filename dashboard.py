@@ -40,8 +40,12 @@ if search_query:
     df = df[df['title'].str.contains(search_query, case=False, na=False)]
 
 # Price range slider
-min_price, max_price = st.slider("Price Range", float(df['price'].min()), float(df['price'].max()), (float(df['price'].min()), float(df['price'].max())))
-df = df[(df['price'] >= min_price) & (df['price'] <= max_price)]
+
+if 'price' in df.columns:
+    min_price, max_price = st.slider("Price Range", float(df['price'].min()), float(df['price'].max()), (float(df['price'].min()), float(df['price'].max())))
+    df = df[(df['price'] >= min_price) & (df['price'] <= max_price)]
+else:
+    st.error("The 'price' column is missing from the data.")
 
 # Category filter
 categories = st.multiselect("Select Categories", df['category'].unique(), default=df['category'].unique())
