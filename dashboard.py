@@ -4,7 +4,7 @@ import pandas as pd
 
 # Connect to the database and load data into a DataFrame
 def load_data():
-    conn = sqlite3.connect("db/products.db")
+    conn = sqlite3.connect(r"C:\Users\user\fake_store_project\db\products.db")
     df = pd.read_sql("SELECT * FROM products", conn)
     conn.close()
     return df
