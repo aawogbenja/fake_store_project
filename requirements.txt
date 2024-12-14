@@ -1,0 +1,7 @@
+streamlit
+pandas
+matplotlib
+sqlite3
+requests
+celery
+redis
