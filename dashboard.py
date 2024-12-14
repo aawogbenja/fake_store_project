@@ -3,14 +3,32 @@ import sqlite3
 import pandas as pd
 
 # Connect to the database and load data into a DataFrame
+
 def load_data():
-    conn = sqlite3.connect(r"C:\Users\user\fake_store_project\db\products.db")
-    df = pd.read_sql("SELECT * FROM products", conn)
-    conn.close()
-    return df
+    db_path = r"C:\Users\user\fake_store_project\db\products.db"
+
+    # Check if the database file exists
+    if not os.path.exists(db_path):
+        st.error(f"Database file not found at {db_path}. Please ensure the file exists.")
+        return pd.DataFrame()  # Return an empty DataFrame to prevent app crashing
+
+    try:
+        conn = sqlite3.connect(db_path)
+        df = pd.read_sql("SELECT * FROM products", conn)
+        conn.close()
+        return df
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
+        return pd.DataFrame()  # Return an empty DataFrame in case of error
 
 # Load data
 df = load_data()
+
+# Display the data
+if not df.empty:
+    st.dataframe(df)
+else:
+    st.write("No data available.")
 
 # Streamlit App Title
 st.title("🛒 E-commerce Products Dashboard")
