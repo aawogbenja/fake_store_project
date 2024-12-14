@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 import os
+import matplotlib.pyplot as plt
 
 # Connect to the database and load data into a DataFrame
 
@@ -60,9 +61,11 @@ st.write("### Price Distribution")
 st.bar_chart(df[['title', 'price']].set_index('title'))
 
 # Pie chart for categories
-st.write("### Product Categories")
+st.write("### Product Categories Distribution")
 category_count = df['category'].value_counts()
-st.write(category_count)
-st.write(category_count.plot.pie(autopct='%1.1f%%'))
+fig, ax = plt.subplots()
+ax.pie(category_count, labels=category_count.index, autopct='%1.1f%%')
+st.pyplot(fig)
+
 st.write("DataFrame Columns:", df.columns)
 st.write("Sample Data:", df.head())
