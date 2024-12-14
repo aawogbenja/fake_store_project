@@ -1,6 +1,7 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+import os
 
 # Connect to the database and load data into a DataFrame
 
