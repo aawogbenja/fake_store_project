@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 # Connect to the database and load data into a DataFrame
 
 def load_data():
-    db_path = r"C:\Users\user\fake_store_project\db\products.db"
+    db_path = "db/products.db"
 
     # Check if the database file exists
     if not os.path.exists(db_path):
