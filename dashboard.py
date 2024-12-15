@@ -3,19 +3,14 @@ import sqlite3
 import pandas as pd
 import plotly.express as px
 import os
-import sys
 from scraper.fetch_products import fetch_products
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "scraper")))
 
-# Connect to the database and load data into a DataFrame
+# Load data from the database
 def load_data():
     db_path = "db/products.db"
-
-    # Check if the database file exists
     if not os.path.exists(db_path):
         st.error(f"Database file not found at {db_path}. Please ensure the file exists.")
         return pd.DataFrame()
-
     try:
         conn = sqlite3.connect(db_path)
         df = pd.read_sql("SELECT * FROM products", conn)
@@ -28,9 +23,6 @@ def load_data():
 # Load the data
 df = load_data()
 
-# Streamlit App Title
-st.title("🛒 E-commerce Products Dashboard")
-
 # Refresh Button
 if st.button("Refresh Data"):
     with st.spinner("Fetching data..."):
@@ -38,55 +30,35 @@ if st.button("Refresh Data"):
         st.success("Data refreshed successfully!")
         df = load_data()
 
-# Display the data
-if not df.empty:
-    st.dataframe(df)
-else:
-    st.write("No data available.")
+# Filters
+st.title("🛒 E-commerce Products Dashboard")
 
-# Search bar to filter products by title
-search_query = st.text_input("Search for a product by title:")
-if search_query:
-    df = df[df['title'].str.contains(search_query, case=False, na=False)]
+selected_categories = st.multiselect("Filter by Categories", df['category'].unique(), default=df['category'].unique())
+filtered_df = df[df['category'].isin(selected_categories)]
 
-# Price range slider
-if 'price' in df.columns and not df.empty:
-    min_price, max_price = st.slider(
-        "Price Range", 
-        float(df['price'].min()), 
-        float(df['price'].max()), 
-        (float(df['price'].min()), float(df['price'].max()))
-    )
-    df = df[(df['price'] >= min_price) & (df['price'] <= max_price)]
-else:
-    st.error("The 'price' column is missing from the data.")
+if 'price' in filtered_df.columns and not filtered_df.empty:
+    min_price, max_price = st.slider("Price Range", float(filtered_df['price'].min()), float(filtered_df['price'].max()), (float(filtered_df['price'].min()), float(filtered_df['price'].max())))
+    filtered_df = filtered_df[(filtered_df['price'] >= min_price) & (filtered_df['price'] <= max_price)]
 
-# Category filter
-if 'category' in df.columns and not df.empty:
-    categories = st.multiselect("Select Categories", df['category'].unique(), default=df['category'].unique())
-    df = df[df['category'].isin(categories)]
-else:
-    st.error("The 'category' column is missing from the data.")
+# Display Data
+st.dataframe(filtered_df)
 
-# Display filtered data
-st.write(df)
+# Bar Chart with Tooltips
+if 'category' in filtered_df.columns and not filtered_df.empty:
+    category_count = filtered_df['category'].value_counts()
+    fig_bar = px.bar(category_count, x=category_count.index, y=category_count.values, labels={'x': 'Category', 'y': 'Count'}, title='Product Categories', text=category_count.values)
+    fig_bar.update_traces(texttemplate='%{text}', textposition='outside')
+    st.plotly_chart(fig_bar)
 
-# Bar Chart of Product Categories
-if 'category' in df.columns and not df.empty:
-    category_count = df['category'].value_counts()
-    fig = px.bar(category_count, x=category_count.index, y=category_count.values, 
-                 labels={'x': 'Category', 'y': 'Count'}, title='Product Categories')
-    st.plotly_chart(fig)
+# Line Chart for Prices
+if 'price' in filtered_df.columns and not filtered_df.empty:
+    fig_line = px.line(filtered_df, x='category', y='price', color='title', title='Product Prices by Category', markers=True)
+    st.plotly_chart(fig_line)
 
-# Detailed Product View
-if not df.empty:
-    selected_product = st.selectbox("Select a product to view details:", df['title'].unique())
-    if selected_product:
-        product_details = df[df['title'] == selected_product].iloc[0]
-        st.write(f"**Title:** {product_details['title']}")
-        st.write(f"**Price:** ${product_details['price']}")
-        st.write(f"**Category:** {product_details['category']}")
-        st.write(f"**Description:** {product_details['description']}")
-        st.image(product_details['image'], width=300)
-else:
-    st.write("No products available for detailed view.")
+# Image Gallery
+st.write("### Product Image Gallery")
+if not filtered_df.empty:
+    cols = st.columns(3)
+    for i, row in enumerate(filtered_df.itertuples()):
+        with cols[i % 3]:
+            st.image(row.image, caption=row.title, use_container_width=True)
